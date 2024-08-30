@@ -150,7 +150,13 @@ export default class Grid {
         return blockedCells;
     }
     
-    
+    isSpecialSquare(row, col) {
+        return (
+            this.isBlocked(row, col) ||
+            (row === this.start.row && col === this.start.col) ||
+            (row === this.end.row && col === this.end.col)
+        );
+    }
     
 
     calculateGridPosition() {

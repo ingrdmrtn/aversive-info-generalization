@@ -1,4 +1,4 @@
-export default class ui {
+export default class ui {  // Make sure the class name is UI with uppercase
     constructor(scene) {
         this.scene = scene;
     }
@@ -55,27 +55,46 @@ export default class ui {
     }
 
     // New method to create a progress bar
-    createProgressBar(x, y, width, height, initialFuel) {
-        this.fuelBar = this.scene.add.graphics();
-        this.fuelBar.fillStyle(0x00ff00, 1);  // Green color
-        this.fuelBar.fillRect(x, y, width, height);  // Position and size
-        this.fuelBar.maxWidth = width;  // Store the max width for later use
-
-        this.remainingFuel = initialFuel;  // Initial fuel level
+    createProgressBar() {
+        this.fuelBar = this.scene.add.graphics();  // Use this.scene.add instead of this.add
+        this.fuelBar.fillStyle(0x00ff00, 1);  // Green color for the fuel bar
+        this.fuelBar.fillRect(20, 20, 200, 20);  // Initial position and size of the fuel bar
+        this.fuelBar.maxWidth = 200;  // Store the max width for later use
+    
+        this.remainingFuel = 200;  // Initial fuel level
+    
+        // Step 1: Add the text object for displaying the fuel percentage
+        this.fuelText = this.scene.add.text(
+            20 + 200 / 2, // Horizontally center the text within the first part of the bar
+            20 + 20 / 2, // Vertically center the text within the bar
+            '100%', {
+                fontSize: '16px',
+                fill: '#ffffff',  // White text color
+                stroke: '#000000',  // Black outline
+                strokeThickness: 3,  // Thickness of the outline
+                fontFamily: 'Arial',
+            }
+        ).setOrigin(0.5);
     }
+    
+    
 
     // New method to update the progress bar
     updateProgressBar(amount) {
         this.remainingFuel -= amount;  // Decrease the fuel by a specified amount
         this.fuelBar.clear();
         this.fuelBar.fillStyle(0x00ff00, 1);
-
+    
         if (this.remainingFuel <= 0) {
             this.remainingFuel = 0;
+            this.fuelText.setText('0%');
             return false;  // Indicate that fuel is depleted
         }
-
-        this.fuelBar.fillRect(20, 20, this.remainingFuel, 20);
+    
+        const fuelPercent = (this.remainingFuel / this.fuelBar.maxWidth) * 100;  // Calculate the fuel percentage
+        this.fuelText.setText(`${Math.round(fuelPercent)}%`);  // Step 2: Update the text
+    
+        this.fuelBar.fillRect(20, 20, this.remainingFuel, 20);  // Update the fuel bar width
         return true;  // Fuel is still available
-    }
+    }    
 }

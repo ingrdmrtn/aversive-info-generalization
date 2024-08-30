@@ -90,34 +90,28 @@ export default class GameManager {
     }
 
     revealValue(row, col) {
-        const value = this.Grid.getCellValue(row, col);
-        console.log(`Revealing value at (${row}, ${col}): ${value}`);
+        if (!this.Grid.isSpecialSquare(row, col)) {
+            const value = this.Grid.getCellValue(row, col);
+            console.log(`Revealing value at (${row}, ${col}): ${value}`);
     
-        // Optionally, visually represent the revealed value on the grid
-        const cell = this.Grid.gridGroup.getChildren().find(cell => cell.getData('row') === row && cell.getData('col') === col);
-        if (cell && value !== undefined) {
-            const textStyle = {
-                fontSize: '18px',          // Set the font size
-                fontFamily: 'Arial',       // Set the font family
-                color: '#ffffff',          // Set the text color
-                align: 'center',           // Align the text to the center
-                fontStyle: 'bold',         // Make the text bold
-                stroke: '#000000',         // Add a stroke to the text
-                strokeThickness: 3,        // Set the stroke thickness
-                padding: {                 // Add padding around the text
-                    x: 10,
-                    y: 5
-                }
-                // No backgroundColor property here
-            };
-    
-            const text = this.scene.add.text(cell.x + this.cellSize / 2, cell.y + this.cellSize / 2, value, textStyle)
-                .setOrigin(0.5);  // Center the text within the cell
-    
-            // Store the text object on the cell for later removal if needed
-            cell.setData('revealedText', text);
+            const cell = this.Grid.gridGroup.getChildren().find(cell => cell.getData('row') === row && cell.getData('col') === col);
+            if (cell) {
+                const textStyle = {
+                    fontSize: '16px',
+                    fontFamily: 'Arial',
+                    color: '#ffffff',
+                    align: 'center',
+                    stroke: '#000000',
+                    strokeThickness: 3
+                };
+                const text = this.scene.add.text(cell.x + this.Grid.cellSize / 2, cell.y + this.Grid.cellSize / 2, value, textStyle).setOrigin(0.5);
+                cell.setData('revealedText', text);
+            }
+        } else {
+            console.log(`Cannot reveal value at (${row}, ${col}): Special square (blocked/start/end)`);
         }
     }
+    
     
     
 
