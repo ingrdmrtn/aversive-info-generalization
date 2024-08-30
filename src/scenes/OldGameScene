@@ -1,0 +1,173 @@
+import UIManager from '../classes/ui.js';
+import boat from '../classes/boat.js';
+import grid from '../classes/grid.js';
+
+class GameScene extends Phaser.Scene {
+    constructor() {
+        super("GameScene");
+        this.ui = null;
+        this.grid = null;
+        this.boat = null;
+        this.currentTrial = 0;
+        this.clickCount = 0;
+        this.clickLimit = 10;
+        this.currentPhase = 'Search'; // Initial phase
+        this.canClick = true; // Flag to control if squares can be clicked
+        this.score = 0; // Score variable
+        this.previouslyRevealedText = null;
+        this.newgrids = [];
+    }
+
+    preload() {
+        // Preload assets
+        this.load.image('sprite', '../assets/submarine.png');
+        this.load.spritesheet('button', '../assets/spritesheet.png', { frameWidth: 40, frameHeight: 33 });
+        this.load.image('background', '../assets/map_background.png');
+    }
+
+    create() {
+        // Add the background image
+        this.add.image(0, 0, 'background').setOrigin(0, 0).setDepth(-1);
+
+        // Initialize UI and grid managers
+        this.ui = new UIManager(this);
+        this.grid = new grid(this);
+
+        // Load grids and start the first trial
+        this.loadgrids();
+
+        // Create UI elements
+        this.ui.createText('clickCounter', 10, 10, 'Clicks left: 10', { fontSize: '20px', fill: '#ffffff' });
+        this.ui.createText('phaseText', 400, 10, 'Phase: Search', { fontSize: '20px', fill: '#ffffff' });
+        this.ui.createText('scoreText', 200, 10, 'Score: 0', { fontSize: '20px', fill: '#ffffff' });
+
+        // Create the "Proceed" button but keep it hidden initially
+        this.ui.createButton('proceedButton', 300, 10, 100, 50, 'Proceed', () => {
+            this.switchPhase();
+        }, { color: 0xff0000 }, { fontSize: '20px', fill: '#ffffff' });
+        this.ui.hideElement('proceedButton');
+
+        this.createToggleButton();
+    }
+
+    loadgrids() {
+        Promise.all([
+            fetch('../reward_grid.json').then(response => response.json()),
+            fetch('../loss_grid.json').then(response => response.json())
+        ])
+        .then(([rewardData, lossData]) => {
+            this.grids = rewardData;
+            this.newgrids = lossData;
+
+            if (this.grids.length > 0 && this.newgrids.length > 0) {
+                this.loadNextgrid();  // Load the first grid after both data sets are fetched
+            } else {
+                console.error('Error: No grids available in the JSON files.');
+            }
+        })
+        .catch(error => console.error('Error loading grid data:', error));
+    }
+
+    createToggleButton() {
+        this.ui.createButton('toggleButton', 450, 25, 100, 50, '', () => {
+            this.toggleButton();
+        }, { color: 0x001325 }, { fontSize: '20px', fill: '#ffffff' });
+
+        const button = this.ui.uiElements['toggleButton'].button;
+        const buttonSprite = this.add.sprite(button.x + 50, button.y + 25, 'button', 0).setInteractive();
+        buttonSprite.setDepth(1);
+        buttonSprite.on('pointerdown', () => {
+            this.toggleButton();
+        });
+        this.ui.uiElements['toggleButton'].sprite = buttonSprite;
+    }
+
+    toggleButton() {
+        const buttonSprite = this.ui.uiElements['toggleButton'].sprite;
+        if (this.buttonState === 'off') {
+            this.buttonState = 'on';
+            buttonSprite.setFrame(1);
+        } else {
+            this.buttonState = 'off';
+            buttonSprite.setFrame(0);
+        }
+    }
+
+    loadNextgrid() {
+        if (this.currentTrial < this.grids.length) {
+            console.log('Loading next grid...');
+            this.grid.setgridData(this.grids[this.currentTrial], this.newgrids[this.currentTrial]);
+            this.grid.creategrid(); // Create the grid with centered position
+            console.log('grid created.');
+    
+            // Align the boat with the grid
+            const startPosition = this.grid.getgridSquarePosition(0, 0); // Assuming boat starts at (0,0)
+            this.boat = new boat(this, 'sprite', this.grid, startPosition.x, startPosition.y); // Initialize the boat at the starting position
+            console.log('boat initialized at:', startPosition);
+    
+            this.currentTrial++;
+            this.clickCount = 0;  // Reset the click count for the new grid
+            this.updateClickCounter();  // Update the click counter display
+            this.ui.updateText('phaseText', `Phase: ${this.currentPhase}`);  // Update phase text
+            this.canClick = true;  // Enable clicks for the new grid
+            this.score = 0;  // Reset the score for the new grid
+            this.grid.visitedSquares.clear();  // Clear the visited squares
+            this.updateScore();  // Update the score display
+        } else {
+            console.log('All trials completed.');
+        }
+    }
+    
+    onSquareClick(row, col) {
+        if (this.boat) {
+            const targetPosition = this.grid.getgridSquarePosition(row, col);
+            console.log(`Moving boat to grid square (${row}, ${col}) at position (${targetPosition.x}, ${targetPosition.y})`); // Debugging log
+            this.boat.moveTo(targetPosition.x, targetPosition.y);
+        }
+    }
+
+    updateClickCounter() {
+        this.ui.updateText('clickCounter', `Clicks left: ${this.clickLimit - this.clickCount}`);
+    }
+
+    updateScore() {
+        this.ui.updateText('scoreText', `Score: ${this.score}`);
+    }
+
+    switchPhase() {
+        if (this.currentPhase === 'Search') {
+            this.currentPhase = 'Plan';
+            console.log('Switching to Plan Phase');
+            if (this.boat) {
+                this.boat.sprite.setVisible(true); // Ensure the sprite is visible
+            }
+
+            // Hide the previously revealed text
+            if (this.previouslyRevealedText) {
+                this.previouslyRevealedText.setVisible(false);
+                this.previouslyRevealedText = null;  // Clear the reference to the previously revealed text
+            }
+
+            // Hide the "Proceed" button
+            this.ui.hideElement('proceedButton');
+
+        } else {
+            this.currentPhase = 'Search';
+            console.log('Switching to Search Phase');
+            // After the Plan phase, load the next grid
+            this.loadNextgrid();
+        }
+        this.ui.updateText('phaseText', `Phase: ${this.currentPhase}`);
+    }
+
+    update() {
+        if (this.boat) {
+            this.boat.update();
+            console.log(`boat current position - x: ${this.boat.sprite.x}, y: ${this.boat.sprite.y}`);
+        } else {
+            console.warn('boat has not been initialized yet.');
+        }
+    }    
+}
+
+export default GameScene;
