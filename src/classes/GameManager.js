@@ -92,21 +92,33 @@ export default class GameManager {
     revealValue(row, col) {
         const value = this.Grid.getCellValue(row, col);
         console.log(`Revealing value at (${row}, ${col}): ${value}`);
-
+    
         // Optionally, visually represent the revealed value on the grid
         const cell = this.Grid.gridGroup.getChildren().find(cell => cell.getData('row') === row && cell.getData('col') === col);
-        if (cell) {
-            const text = this.scene.add.text(cell.x + this.cellSize / 2, cell.y + this.cellSize / 2, value, {
-                fontSize: '16px',
-                color: '#000000',
-                align: 'center',
-                backgroundColor: '#ffffff'
-            }).setOrigin(0.5);
-
-            // You can store the text object on the cell for later removal if needed
+        if (cell && value !== undefined) {
+            const textStyle = {
+                fontSize: '18px',          // Set the font size
+                fontFamily: 'Arial',       // Set the font family
+                color: '#ffffff',          // Set the text color
+                align: 'center',           // Align the text to the center
+                fontStyle: 'bold',         // Make the text bold
+                stroke: '#000000',         // Add a stroke to the text
+                strokeThickness: 3,        // Set the stroke thickness
+                padding: {                 // Add padding around the text
+                    x: 10,
+                    y: 5
+                }
+                // No backgroundColor property here
+            };
+    
+            const text = this.scene.add.text(cell.x + this.cellSize / 2, cell.y + this.cellSize / 2, value, textStyle)
+                .setOrigin(0.5);  // Center the text within the cell
+    
+            // Store the text object on the cell for later removal if needed
             cell.setData('revealedText', text);
         }
     }
+    
     
 
     canMoveTo(newX, newY) {
@@ -130,39 +142,41 @@ export default class GameManager {
         );
     }
 
-    moveSub(direction) {
-        let newX = this.Sub.sprite.x;
-        let newY = this.Sub.sprite.y;
-    
-        switch (direction) {
-            case 'left':
-                newX -= this.cellSize;
-                break;
-            case 'right':
-                newX += this.cellSize;
-                break;
-            case 'up':
-                newY -= this.cellSize;
-                break;
-            case 'down':
-                newY += this.cellSize;
-                break;
-        }
-    
-        if (this.canMoveTo(newX - this.cellSize / 2, newY - this.cellSize / 2)) {
-            this.Sub.centerSub(newX - this.cellSize / 2, newY - this.cellSize / 2);
-    
-            // Retrieve and log the hidden value of the current cell
-            const row = Math.floor((newY - this.Grid.y) / this.cellSize);
-            const col = Math.floor((newX - this.Grid.x) / this.cellSize);
-            const value = this.Grid.getCellValue(row, col);
-            console.log(`Sub moved to cell (${row}, ${col}) with hidden value: ${value}`);
-    
-            if (this.checkCollisionWithEnd(newX - this.cellSize / 2, newY - this.cellSize / 2)) {
-                this.startNewTrial();
-            }
+    // Inside your GameManager class...
+
+moveSub(direction) {
+    let newX = this.Sub.sprite.x;
+    let newY = this.Sub.sprite.y;
+
+    switch (direction) {
+        case 'left':
+            newX -= this.cellSize;
+            break;
+        case 'right':
+            newX += this.cellSize;
+            break;
+        case 'up':
+            newY -= this.cellSize;
+            break;
+        case 'down':
+            newY += this.cellSize;
+            break;
+    }
+
+    if (this.canMoveTo(newX - this.cellSize / 2, newY - this.cellSize / 2)) {
+        this.Sub.centerSub(newX - this.cellSize / 2, newY - this.cellSize / 2);
+
+        const row = Math.floor((newY - this.Grid.y) / this.cellSize);
+        const col = Math.floor((newX - this.Grid.x) / this.cellSize);
+        const value = this.Grid.getCellValue(row, col);
+        console.log(`Sub moved to cell (${row}, ${col}) with hidden value: ${value}`);
+
+        if (this.checkCollisionWithEnd(newX - this.cellSize / 2, newY - this.cellSize / 2)) {
+            this.scene.handleTrialSuccess();  // Call the trial success handler
         }
     }
+}
+
     
 
     enableClickMovement() {

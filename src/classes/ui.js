@@ -4,20 +4,13 @@ export default class ui {
     }
 
     createButton(key, x, y, width, height, text, callback, buttonStyle = {}, textStyle = {}, hoverStyle = {}, clickStyle = {}) {
-        // Create a container for the button
         const buttonContainer = this.scene.add.container(x, y);
-
-        // Create the button background
         const buttonBg = this.scene.add.rectangle(0, 0, width, height, buttonStyle.color || 0x000000, buttonStyle.alpha || 1);
         buttonBg.setInteractive({ useHandCursor: true });
-
-        // Create the button text
         const buttonText = this.scene.add.text(0, 0, text, { ...textStyle }).setOrigin(0.5);
 
-        // Add background and text to the container
         buttonContainer.add([buttonBg, buttonText]);
 
-        // Add hover effect
         buttonBg.on('pointerover', () => {
             this.scene.tweens.add({
                 targets: buttonBg,
@@ -27,10 +20,8 @@ export default class ui {
                 ease: 'Power2'
             });
             buttonBg.setFillStyle(hoverStyle.color || 0x555555);
-            // Add sound or other effects here if needed
         });
 
-        // Remove hover effect
         buttonBg.on('pointerout', () => {
             this.scene.tweens.add({
                 targets: buttonBg,
@@ -42,7 +33,6 @@ export default class ui {
             buttonBg.setFillStyle(buttonStyle.color || 0x000000);
         });
 
-        // Add click effect
         buttonBg.on('pointerdown', () => {
             buttonBg.setFillStyle(clickStyle.color || 0xaaaaaa);
             this.scene.tweens.add({
@@ -56,13 +46,36 @@ export default class ui {
             });
         });
 
-        // Optionally, return the container if you want to manipulate it later
         return buttonContainer;
     }
 
     createText(key, x, y, text, textStyle = {}) {
-        // Create and return the text object
         const uiText = this.scene.add.text(x, y, text, { ...textStyle });
         return uiText;
+    }
+
+    // New method to create a progress bar
+    createProgressBar(x, y, width, height, initialFuel) {
+        this.fuelBar = this.scene.add.graphics();
+        this.fuelBar.fillStyle(0x00ff00, 1);  // Green color
+        this.fuelBar.fillRect(x, y, width, height);  // Position and size
+        this.fuelBar.maxWidth = width;  // Store the max width for later use
+
+        this.remainingFuel = initialFuel;  // Initial fuel level
+    }
+
+    // New method to update the progress bar
+    updateProgressBar(amount) {
+        this.remainingFuel -= amount;  // Decrease the fuel by a specified amount
+        this.fuelBar.clear();
+        this.fuelBar.fillStyle(0x00ff00, 1);
+
+        if (this.remainingFuel <= 0) {
+            this.remainingFuel = 0;
+            return false;  // Indicate that fuel is depleted
+        }
+
+        this.fuelBar.fillRect(20, 20, this.remainingFuel, 20);
+        return true;  // Fuel is still available
     }
 }
