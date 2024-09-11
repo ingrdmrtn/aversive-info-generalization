@@ -26,28 +26,32 @@ class GameScene extends Phaser.Scene {
         this.initializeTrial(rows, cols, cellSize, startPositionRange, endPositionRange, enableBlocking, blockedType, numberOfBlockedSquares, inputMode, values);
 
         if (inputMode === 'keyboard') {
-            this.input.keyboard.on('keydown-LEFT', () => {
+            this.input.keyboard.on('keyup-LEFT', () => {
                 if (!this.gameOver) {
+                    this.handleProgress();
                     this.gameManager.moveSub('left');
-                    this.handleProgress();
+                    
                 }
             });
-            this.input.keyboard.on('keydown-RIGHT', () => {
+            this.input.keyboard.on('keyup-RIGHT', () => {
                 if (!this.gameOver) {
+                    this.handleProgress();
                     this.gameManager.moveSub('right');
-                    this.handleProgress();
+                    
                 }
             });
-            this.input.keyboard.on('keydown-UP', () => {
+            this.input.keyboard.on('keyup-UP', () => {
                 if (!this.gameOver) {
+                    this.handleProgress();
                     this.gameManager.moveSub('up');
-                    this.handleProgress();
+                    
                 }
             });
-            this.input.keyboard.on('keydown-DOWN', () => {
+            this.input.keyboard.on('keyup-DOWN', () => {
                 if (!this.gameOver) {
-                    this.gameManager.moveSub('down');
                     this.handleProgress();
+                    this.gameManager.moveSub('down');
+                    
                 }
             });
         }
@@ -66,6 +70,7 @@ class GameScene extends Phaser.Scene {
         this.ui.fuelBar.fillStyle(0x00ff00, 1);  // Refill the bar with the initial color and dimensions
         this.ui.fuelBar.fillRect(20, 20, this.ui.fuelBar.maxWidth, 20);  // Reset the bar to full width
         this.gameOver = false;  // Reset the gameOver flag when a new trial starts
+        this.ui.updateProgressBar(0);
     }
 
     handleProgress() {
